@@ -13,6 +13,7 @@ import numpy as np
 import multiprocessing
 import sys
 import agents
+import time
 
 kwargs = {}
 for i in range(1, len(sys.argv[1:]), 2):
@@ -62,8 +63,11 @@ def run(k):
 
 if __name__ == '__main__':
 
+    then = time.time()
     with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as p:
         rewards, bests = list(zip(*p.map(run, [i for i in range(N_SIM)])))
+    now = time.time()
 
     print("Average cost:", np.mean(rewards))
     print("Average best possible:", np.mean(bests))
+    print(N_SIM, "simulations completed in", round(now - then, 3), "seconds.")
