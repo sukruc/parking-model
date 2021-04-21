@@ -2,12 +2,14 @@
   "parks": [{
       "cost": 3.0,
       "p_occupied": 0.6,
-      "p_exist": 0.4
+      "p_exist": 0.4,
+      "name": "green"
     },
     {
       "cost": 5.0,
       "p_occupied": 0.4,
-      "p_exist": 0.6
+      "p_exist": 0.6,
+      "name": "red"
     }
   ],
   "cost_garage": 10.0,
