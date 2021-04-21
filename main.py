@@ -8,8 +8,8 @@ Arguments:
 """
 
 import json
-from model import Street, StreetConfig
 import numpy as np
+import model
 import multiprocessing
 import sys
 import agents
@@ -23,7 +23,7 @@ for i in range(1, len(sys.argv[1:]), 2):
     kwargs[sys.argv[i].lstrip('-')] = arg
 
 with open('conf.json') as f:
-    conf = StreetConfig(**json.load(f))
+    conf = model.StreetConfig(**json.load(f))
 
 N = 20
 N_SIM = 30000
@@ -40,7 +40,7 @@ if 'len' in kwargs:
     del kwargs['len']
 
 
-s = Street(N, **conf)
+s = model.TransitStreet(N, **conf)
 agent = Agent(conf, **kwargs)
 
 

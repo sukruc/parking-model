@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from attr import dataclass
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 
 @dataclass
@@ -36,10 +36,26 @@ class ParkingOnStreet(Parking):
             p=[self.p_occupied, 1. - self.p_occupied]
         )
 
+    def spaces_left():
+        doc = "The spaces_left property."
+
+        def fget(self):
+            return self._spaces_left
+
+        def fset(self, value):
+            if not isinstance(value, int) or value < 0:
+                raise ValueError("Invalid value for spaces left: %s" % value)
+            self._spaces_left = value
+
+        def fdel(self):
+            del self._spaces_left
+        return locals()
+    spaces_left = property(**spaces_left())
+
 
 @dataclass
 class ParkConf(dict):
-    """Park StreetConfiguration object."""
+    """Park Configuration object."""
     cost: float
     p_occupied: float
     p_exist: float
@@ -189,7 +205,7 @@ class Street:
                             * self.cost_walk_unit for i in range(self.length)])
         return min(best_parking, self.cost_garage)
 
-    def step(self, action):
+    def step(self, action) -> Tuple[ParkingOnStreet, float, bool, int]:
         """Take an action.
 
         Arguments:
@@ -217,3 +233,20 @@ class Street:
         if action == 1:
             self.parked = True
         return (self.current_parking, self.reward, self.done, self.spaces_left)
+
+
+class TransitStreet(Street):
+    def step(self, action) -> Tuple[ParkingOnStreet, float, bool, int]:
+        park, reward, done, spaces_left = super().step(action)
+        if park is not None:
+            park.spaces_left = spaces_left
+        return park, reward, done, spaces_left
+
+
+
+
+
+
+
+
+
