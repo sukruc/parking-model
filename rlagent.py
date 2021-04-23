@@ -8,6 +8,7 @@ from sklearn.linear_model import SGDRegressor
 # from keras.optimizers import Adam
 from collections import deque
 import random
+import time
 
 class DummyTransformer:
     def fit(self, x, y=None):
@@ -71,6 +72,8 @@ class SarsaAgent:
         self.epsilon_shrink = epsilon_shrink
         self.alpha_shrink = alpha_shrink
         self._abs_update_mean = []
+        self._episode_time = []
+        self._creation_time = time.time()
         if max_episode_len is None:
             max_episode_len = float('inf')
         self.max_episode_len = max_episode_len
@@ -135,6 +138,7 @@ class SarsaAgent:
         self.alpha *= self.alpha_shrink
         episode_abs_mean = np.abs(old_Qtable - self.Qsa).max()
         self._abs_update_mean.append(episode_abs_mean)
+        self._episode_time.append(time.time() - self._creation_time)
 
     def set_seed(self):
         """Set seed for numpy and environment."""
@@ -225,26 +229,29 @@ class QLAgent(SarsaAgent):
     """
     def _Q_update_func(self, state, action, reward, state_p, done, action_p=None):
         """Calculate new Q value for state-action pair."""
-        Q_p = self.Qsa[state_p].max() #if not done else 0.0
-        return self.Q(state, action) \
+        Q_p = self.Qsa[state_p].max()# if not done else 0.0
+#        return self.Q(state, action) \
             + self.alpha * (reward
                             + self.gamma * Q_p
                             - self.Q(state, action)
                             )
 
-    def _fit_episode(self):
+    def _fit_episode(self, env=None):
         """Update values for one iteration.
 
         An iteration is defined by a sequence of steps from starting point to a
         terminal state.
         """
         done = False
-        state = self.env_.reset()
+        if env is None:
+            env = self.env_
+
+        state = env.reset()
         old_Qtable = self.Qsa.copy()
         steps = 0
         while not done and steps <= self.max_episode_len:
             action = self.move(state)
-            state_p, reward, done, _ = self.env_.step(action)
+            state_p, reward, done, _ = env.step(action)
             self.Qsa[state, action] = self._Q_update_func(state, action, reward, state_p, done)
             state = state_p
             steps += 1
@@ -252,6 +259,8 @@ class QLAgent(SarsaAgent):
         self.alpha *= self.alpha_shrink
         episode_abs_mean = np.abs(old_Qtable - self.Qsa).mean()
         self._abs_update_mean.append(episode_abs_mean)
+        self._episode_time.append(time.time() - self._creation_time)
+
 
 def shape_map(amap):
     """Create an nxn matrix from given environment map."""
