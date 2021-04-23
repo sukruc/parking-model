@@ -34,14 +34,20 @@ class SarsaAgent:
     Arguments:
     --------------
     gamma   : float, default 1.0
-              Discount factor
+        Discount factor
     alpha   : float, default 0.25
-              Learning rate
+        Learning rate
     epsilon : float or None, default None
-              Stochastic exploration move percentage. Model's greediness can be
-              defined by 1 - epsilon.
+        Stochastic exploration move percentage. Model's greediness can be
+        defined by 1 - epsilon.
     seed    : int or None, default None
-              Seed value to be passed on to environment and numpy
+        Seed value to be passed on to environment and numpy
+    epsilon_shrink : float, default 1.0
+        Multiply epsilon by this value at the end of each episode
+    alpha_shrink : float, default 1.0
+        Multiply alpha (learning rate) by this value at the end of each episode
+    max_episode_len : int or None, default None
+        Maximum length of an episode. Defaults to infinity.
 
     Notes:
     ---------------
@@ -196,14 +202,20 @@ class QLAgent(SarsaAgent):
     Arguments:
     --------------
     gamma   : float, default 1.0
-              Discount factor
+        Discount factor
     alpha   : float, default 0.25
-              Learning rate
+        Learning rate
     epsilon : float or None, default None
-              Stochastic exploration move percentage. Model's greediness can be
-              defined by 1 - epsilon.
+        Stochastic exploration move percentage. Model's greediness can be
+        defined by 1 - epsilon.
     seed    : int or None, default None
-              Seed value to be passed on to environment and numpy
+        Seed value to be passed on to environment and numpy
+    epsilon_shrink : float, default 1.0
+        Multiply epsilon by this value at the end of each episode
+    alpha_shrink : float, default 1.0
+        Multiply alpha (learning rate) by this value at the end of each episode
+    max_episode_len : int or None, default None
+        Maximum length of an episode. Defaults to infinity.
 
     Notes:
     --------------

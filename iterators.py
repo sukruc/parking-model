@@ -10,32 +10,6 @@ _MSG_STOP_EPSILON_OPTIMAL_VALUE = "Iterating stopped, epsilon-optimal value " \
 _MSG_STOP_UNCHANGING_POLICY = "Iterating stopped, unchanging policy found."
 
 
-class ValueIteration(mdptoolbox.mdp.ValueIteration):
-    def __init__(self,*args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.max_iter = kwargs['max_iter']
-        self.args = args
-        self.kwargs = kwargs
-        del kwargs['max_iter']
-        del kwargs['initial_value']
-        # self.kwargs['max_iter'] = 1
-        self._abs_diff_mean = []
-
-    def run(self):
-        iterator = mdptoolbox.mdp.ValueIteration(*self.args, **self.kwargs)
-        iterator.run()
-        Vi = np.array(iterator.V)
-        for i in range(self.max_iter):
-            iterator = mdptoolbox.mdp.ValueIteration(*self.args, **self.kwargs, initial_value=Vi.tolist(), max_iter=1)
-            iterator.run()
-            V = np.array(iterator.V)
-            self._abs_diff_mean.append(np.abs(Vi - V).mean())
-            Vi = V
-        # import pdb; pdb.set_trace()
-        self.V = V
-        self.policy = iterator.policy
-
-
 def _printVerbosity(iteration, variation):
     if isinstance(variation, float):
         print("{:>10}{:>12f}".format(iteration, variation))
@@ -46,6 +20,17 @@ def _printVerbosity(iteration, variation):
 
 
 class PolicyIterationWithers(mdptoolbox.mdp.PolicyIteration):
+    """mdptoolbox.mdp.PolicyIteration object with convergence array.
+
+    See :mdptoolbox.mdp.PolicyIteration: for documentation.
+    """
+
+    @property
+    def convergence_array(self):
+        if not hasattr(self, '_arr'):
+            return []
+        else:
+            return self._arr
 
     def run(self):
         # Run the policy iteration algorithm.
@@ -107,6 +92,18 @@ def getSpan(W):
 
 
 class ValueIterationWithers(mdptoolbox.mdp.ValueIteration):
+    """mdptoolbox.mdp.ValueIteration object with convergence array.
+
+    See mdptoolbox.mdp.ValueIteration for documentation.
+    """
+
+    @property
+    def convergence_array(self):
+        if not hasattr(self, '_arr'):
+            return []
+        else:
+            return self._arr
+
     def run(self):
         # Run the value iteration algorithm.
         self._arr = []
