@@ -230,7 +230,7 @@ class QLAgent(SarsaAgent):
     def _Q_update_func(self, state, action, reward, state_p, done, action_p=None):
         """Calculate new Q value for state-action pair."""
         Q_p = self.Qsa[state_p].max()# if not done else 0.0
-#        return self.Q(state, action) \
+        return self.Q(state, action) \
             + self.alpha * (reward
                             + self.gamma * Q_p
                             - self.Q(state, action)
