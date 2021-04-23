@@ -1,6 +1,5 @@
 from streetv2 import StreetParking
 from rlagent import QLAgent
-from iterators import iterate_value
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -56,12 +55,28 @@ if __name__ == '__main__':
   allow_goback=allow_goback,
   )
 
-    print("Value Iteration")
-    vi, arr = iterate_value(env.transition, env.rewards, discount=1.)
+    pymdptoolbox_installed = True
+    try:
+        from iterators import iterate_value, iterate_policy
+        print("Value Iteration")
+        vi, arr = iterate_value(env.transition, env.rewards, discount=1.0)
+        print("Policy Iteration")
+        pi, arrp = iterate_policy(env.transition, env.rewards, discount=1.0, max_iter=100)
+    except (ImportError, NameError) as e:
+        raise e
+        vi, arr = None, []
+        pi, arrp = None, []
+        pymdptoolbox_installed = False
     plt.plot(arr)
     plt.xlabel("Iterations")
     plt.ylabel("Max absolute value change")
     plt.savefig('example-run-output/example-run-vi-convergence.png')
+    plt.close()
+
+    plt.plot(arrp)
+    plt.xlabel("Iterations")
+    plt.ylabel("Policy change")
+    plt.savefig('example-run-output/example-run-pi-convergence.png')
     plt.close()
 
     print('Q-Learning')
@@ -74,8 +89,12 @@ if __name__ == '__main__':
     plt.savefig('example-run-output/example-run-ql-convergence.png')
     plt.close()
 
-    fig, ax = plt.subplots(2, 1, sharex=True)
-    ax[0].imshow(np.array(vi.V[:-3]).reshape(env.street_length, env._num_park_states).T, vmin=-20, vmax=5)
+    fig, ax = plt.subplots(3, 1, sharex=True)
+    if pymdptoolbox_installed:
+        ax[0].imshow(np.array(vi.V[:-3]).reshape(env.street_length, env._num_park_states).T, vmin=-20, vmax=5)
+    else:
+        pass
+
     ax[0].set_title('Value Iteration')
     ax[1].imshow(agent.Qsa.max(axis=1)[:-3].reshape(env.street_length, env._num_park_states).T, vmin=-20, vmax=5)
     ax[1].set_title('Q-Learning')

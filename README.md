@@ -104,3 +104,5 @@ Transition and reward matrices for the environment can be accessed as follows:
 
 An example solution with Value Iteration, Policy Iteration and Q-Learning is
 provided in `example_usage.py`.
+
+*Example code requires pymdptoolbox for value iteration.*

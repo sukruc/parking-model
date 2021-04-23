@@ -41,15 +41,15 @@ def iterate_value(transitions, reward, discount=1, epsilon=0.01, max_iter=1000, 
     return iterator, arr
 
 
-def iterate_policy(transitions, reward, discount=1, epsilon=0.01, max_iter=1000, initial_value=0):
+def iterate_policy(transitions, reward, discount=1, max_iter=1000, policy0=None):
     arr = []
-    iterator = mdptoolbox.mdp.PolicyIteration(transitions, reward, discount, epsilon, max_iter=1, initial_value=initial_value)
+    iterator = mdptoolbox.mdp.PolicyIteration(transitions=transitions, reward=reward, discount=discount, max_iter=1, policy0=policy0, eval_type=1)
     iterator.run()
-    Vi = iterator.V
+    Pi = iterator.policy
     for i in range(max_iter):
-        iterator = mdptoolbox.mdp.ValueIteration(transitions, reward, discount, epsilon, max_iter=1, initial_value=list(Vi))
+        iterator = mdptoolbox.mdp.PolicyIteration(transitions=transitions, reward=reward, discount=discount, max_iter=1, policy0=list(Pi), eval_type=1)
         iterator.run()
-        V = iterator.V
-        arr.append(np.abs(np.array(V) - np.array(Vi)).mean())
-        Vi = V
+        P = iterator.policy
+        arr.append(np.abs(np.array(P) - np.array(Pi)).mean())
+        Pi = P
     return iterator, arr
