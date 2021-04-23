@@ -82,6 +82,7 @@ class PolicyIterationWithers(mdptoolbox.mdp.PolicyIteration):
         # Run the policy iteration algorithm.
         # If verbose the print a header
         self._arr = []
+        self._time_arr = []
         if self.verbose:
             print('  Iteration\t\tNumber of different actions')
         # Set up the while stopping condition and the current time
@@ -125,3 +126,53 @@ class PolicyIterationWithers(mdptoolbox.mdp.PolicyIteration):
         # store value and policy as tuples
         self.V = tuple(self.V.tolist())
         self.policy = tuple(self.policy.tolist())
+
+
+def getSpan(W):
+    """Return the span of W
+
+    sp(W) = max W(s) - min W(s)
+
+    """
+    return W.max() - W.min()
+
+
+class ValueIterationWithers(mdptoolbox.mdp.ValueIteration):
+    def run(self):
+        # Run the value iteration algorithm.
+        self._arr = []
+        if self.verbose:
+            print('  Iteration\t\tV-variation')
+
+        self.time = _time.time()
+        while True:
+            self.iter += 1
+
+            Vprev = self.V.copy()
+
+            # Bellman Operator: compute policy and value functions
+            self.policy, self.V = self._bellmanOperator()
+
+            # The values, based on Q. For the function "max()": the option
+            # "axis" means the axis along which to operate. In this case it
+            # finds the maximum of the the rows. (Operates along the columns?)
+            variation = getSpan(self.V - Vprev)
+            self._arr.append(variation)
+
+            if self.verbose:
+                print(("    %s\t\t  %s" % (self.iter, variation)))
+
+            if variation < self.thresh:
+                if self.verbose:
+                    print(_MSG_STOP_EPSILON_OPTIMAL_POLICY)
+                break
+            elif self.iter == self.max_iter:
+                if self.verbose:
+                    print(_MSG_STOP_MAX_ITER)
+                break
+
+        # store value and policy as tuples
+        self.V = tuple(self.V.tolist())
+        self.policy = tuple(self.policy.tolist())
+
+        self.time = _time.time() - self.time

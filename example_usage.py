@@ -57,9 +57,11 @@ if __name__ == '__main__':
 
     pymdptoolbox_installed = True
     try:
-        from iterators import iterate_value, iterate_policy, PolicyIterationWithers
+        from iterators import PolicyIterationWithers, ValueIterationWithers
         print("Value Iteration")
-        vi, arr = iterate_value(env.transition, env.rewards, discount=1.0)
+        vi = ValueIterationWithers(env.transition, env.rewards, discount=0.99, max_iter=1000)
+        vi.run()
+        arr = vi._arr
         print("Policy Iteration")
         pi = PolicyIterationWithers(env.transition, env.rewards, discount=0.99, max_iter=1000)
         pi.run()
