@@ -367,128 +367,128 @@ class GMCAgent:
         return rew, r
 
 
-class DQNAgent(GMCAgent):
-    def __init__(self, lr=0.01, gamma=0.99, init_epsilon=0.9, threshold=0.1,
-                 max_steps=3000, transformer=None):
-        GMCAgent.__init__(self, lr=lr, gamma=gamma, init_epsilon=init_epsilon, threshold=threshold,
-                          max_steps=max_steps, transformer=transformer)
-        self.decision = None
-        self.memory = deque(maxlen=100000)
-
-    def Q(self, s, a):
-        return self.decision.predict(self.transform(s))[a]
-
-    def V(self, s):
-        return self.decision.predict(self.transform(s))
-
-    def policy(self, s):
-        return self.decision.predict(self.transform(s)).argmax()
-
-    def move(self, s):
-        epsilon = max(self.epsilon, self.thresh)
-        if np.random.random() < epsilon:
-            return np.random.randint(self.w.shape[1])
-        else:
-            return self.policy(s)
-
-    def _init_weights(self, env):
-        input_shape = self.transform(np.random.randn(1, env.observation_space.shape[0])).shape[1]
-        output_shape = env.action_space.n
-        self.w = np.random.randn(input_shape, output_shape)
-        model = Sequential()
-        model.add(Dense(150, input_shape=(input_shape,), activation='relu'))
-        model.add(Dense(100, activation='relu'))
-        # model.add(Dense(100, activation='relu'))
-        model.add(Dense(output_shape, activation=None))
-        model.compile(loss='mse', optimizer=Adam(learning_rate=self.alpha))
-        self.decision = model
-        model.fit(self.transform(np.random.randn(1, 8)), np.random.randn(1, 4), verbose=0)
-
-    def fit(self, env, episodes=1000, verbose=1, render_train=False):
-        if self.decision is None:
-            self._init_weights(env)
-        for episode in range(episodes):
-            if verbose:
-                print('Episode:', episode)
-            self.fit_episode(env, verbose, render_train)
-            self.epsilon = self.epsilon * 0.98
-            if np.mean(self.history['rewards'][-100:]) > 200:
-                break
-
-    def update_weights(self):
-        # import pdb; pdb.set_trace()
-        if not self.memory:
-            return
-        sars = random.sample(self.memory, min(32, len(self.memory)))
-
-        S = np.vstack([np.array(episode[0]) for episode in sars])
-        A = np.concatenate([episode[1] for episode in sars])
-        R = np.concatenate([episode[2] for episode in sars])
-        St = np.vstack([np.array(episode[3]) for episode in sars])
-
-        s_ind = np.random.choice(range(S.shape[0]), size=64)
-
-        S = S[s_ind]
-        A = A[s_ind]
-        R = R[s_ind]
-        St = St[s_ind]
-
-        rews = (np.reshape(R, (-1,1))*(np.reshape(A, (-1, 1)) == np.arange(4)))
-        y = self.gamma * self.V(np.array(St))
-        y[rews != 0] = rews[rews != 0]
-        X = self.transform(np.array(S))
-        self.decision.fit(X, y, verbose=0)
-
-    # def update_weights(self, S, A, R):
-    #     y = self.gamma * self.V(np.array(S[1:]))
-    #     rews = (np.reshape(R[:-1], (-1,1))*(np.reshape(A[:-1], (-1, 1)) == np.arange(4)))
-    #     y[rews != 0] = rews[rews != 0]
-    #     X = self.transform(np.array(S[:-1]))
-    #
-    #     self.decision.fit(X, y, verbose=0)
-
-
-        # tf = self.V(S[:-1])
-        # for i in range(1,8):
-        #     y = (np.reshape(R[i:], (-1,1))*(np.reshape(A[i:], (-1, 1)) == np.arange(4))) * self.gamma ** (i - 1) + (self.gamma ** i) * self.V(np.array(S[i:]))
-        #     X = self.transform(np.array(S[:-i]))
-        #     # import pdb; pdb.set_trace()
-        #     self.decision.fit(X, y, verbose=0)
-
-    def fit_episode(self, env, verbose, render_train):
-        S = [env.reset()]
-        a = self.move(S[0])
-        A = [a]
-        R = []
-        done = False
-        i = 0
-        while not done and i <= self.max_steps:
-            St, Rt, done, _ = env.step(a)
-            S.append(St)
-            R.append(Rt)
-            a = self.move(St)
-            if render_train:
-                env.render()
-            A.append(a)
-            i += 1
-            # for k in range(1):
-            self.update_weights()
-        # if not done:
-        #     R[-1] = -600
-        R.append(R[-1])
-        # self.update_weights(S, A, R)
-        # import pdb; pdb.set_trace()
-        self.memory.append([S[:-1], A[:-1], R[:-1], S[1:]])
-        sumr = sum(R)
-        self.history['rewards'].append(sumr)
-        if verbose:
-            print('Total reward:', sumr)
-
-    def get_weights(self):
-        return self.decision.get_weights()
-
-    def set_weights(self, w):
-        self.decision.set_weights(w)
+# class DQNAgent(GMCAgent):
+#     def __init__(self, lr=0.01, gamma=0.99, init_epsilon=0.9, threshold=0.1,
+#                  max_steps=3000, transformer=None):
+#         GMCAgent.__init__(self, lr=lr, gamma=gamma, init_epsilon=init_epsilon, threshold=threshold,
+#                           max_steps=max_steps, transformer=transformer)
+#         self.decision = None
+#         self.memory = deque(maxlen=100000)
+#
+#     def Q(self, s, a):
+#         return self.decision.predict(self.transform(s))[a]
+#
+#     def V(self, s):
+#         return self.decision.predict(self.transform(s))
+#
+#     def policy(self, s):
+#         return self.decision.predict(self.transform(s)).argmax()
+#
+#     def move(self, s):
+#         epsilon = max(self.epsilon, self.thresh)
+#         if np.random.random() < epsilon:
+#             return np.random.randint(self.w.shape[1])
+#         else:
+#             return self.policy(s)
+#
+#     def _init_weights(self, env):
+#         input_shape = self.transform(np.random.randn(1, env.observation_space.shape[0])).shape[1]
+#         output_shape = env.action_space.n
+#         self.w = np.random.randn(input_shape, output_shape)
+#         model = Sequential()
+#         model.add(Dense(150, input_shape=(input_shape,), activation='relu'))
+#         model.add(Dense(100, activation='relu'))
+#         # model.add(Dense(100, activation='relu'))
+#         model.add(Dense(output_shape, activation=None))
+#         model.compile(loss='mse', optimizer=Adam(learning_rate=self.alpha))
+#         self.decision = model
+#         model.fit(self.transform(np.random.randn(1, 8)), np.random.randn(1, 4), verbose=0)
+#
+#     def fit(self, env, episodes=1000, verbose=1, render_train=False):
+#         if self.decision is None:
+#             self._init_weights(env)
+#         for episode in range(episodes):
+#             if verbose:
+#                 print('Episode:', episode)
+#             self.fit_episode(env, verbose, render_train)
+#             self.epsilon = self.epsilon * 0.98
+#             if np.mean(self.history['rewards'][-100:]) > 200:
+#                 break
+#
+#     def update_weights(self):
+#         # import pdb; pdb.set_trace()
+#         if not self.memory:
+#             return
+#         sars = random.sample(self.memory, min(32, len(self.memory)))
+#
+#         S = np.vstack([np.array(episode[0]) for episode in sars])
+#         A = np.concatenate([episode[1] for episode in sars])
+#         R = np.concatenate([episode[2] for episode in sars])
+#         St = np.vstack([np.array(episode[3]) for episode in sars])
+#
+#         s_ind = np.random.choice(range(S.shape[0]), size=64)
+#
+#         S = S[s_ind]
+#         A = A[s_ind]
+#         R = R[s_ind]
+#         St = St[s_ind]
+#
+#         rews = (np.reshape(R, (-1,1))*(np.reshape(A, (-1, 1)) == np.arange(4)))
+#         y = self.gamma * self.V(np.array(St))
+#         y[rews != 0] = rews[rews != 0]
+#         X = self.transform(np.array(S))
+#         self.decision.fit(X, y, verbose=0)
+#
+#     # def update_weights(self, S, A, R):
+#     #     y = self.gamma * self.V(np.array(S[1:]))
+#     #     rews = (np.reshape(R[:-1], (-1,1))*(np.reshape(A[:-1], (-1, 1)) == np.arange(4)))
+#     #     y[rews != 0] = rews[rews != 0]
+#     #     X = self.transform(np.array(S[:-1]))
+#     #
+#     #     self.decision.fit(X, y, verbose=0)
+#
+#
+#         # tf = self.V(S[:-1])
+#         # for i in range(1,8):
+#         #     y = (np.reshape(R[i:], (-1,1))*(np.reshape(A[i:], (-1, 1)) == np.arange(4))) * self.gamma ** (i - 1) + (self.gamma ** i) * self.V(np.array(S[i:]))
+#         #     X = self.transform(np.array(S[:-i]))
+#         #     # import pdb; pdb.set_trace()
+#         #     self.decision.fit(X, y, verbose=0)
+#
+#     def fit_episode(self, env, verbose, render_train):
+#         S = [env.reset()]
+#         a = self.move(S[0])
+#         A = [a]
+#         R = []
+#         done = False
+#         i = 0
+#         while not done and i <= self.max_steps:
+#             St, Rt, done, _ = env.step(a)
+#             S.append(St)
+#             R.append(Rt)
+#             a = self.move(St)
+#             if render_train:
+#                 env.render()
+#             A.append(a)
+#             i += 1
+#             # for k in range(1):
+#             self.update_weights()
+#         # if not done:
+#         #     R[-1] = -600
+#         R.append(R[-1])
+#         # self.update_weights(S, A, R)
+#         # import pdb; pdb.set_trace()
+#         self.memory.append([S[:-1], A[:-1], R[:-1], S[1:]])
+#         sumr = sum(R)
+#         self.history['rewards'].append(sumr)
+#         if verbose:
+#             print('Total reward:', sumr)
+#
+#     def get_weights(self):
+#         return self.decision.get_weights()
+#
+#     def set_weights(self, w):
+#         self.decision.set_weights(w)
 
 
 class DecisionAgent:

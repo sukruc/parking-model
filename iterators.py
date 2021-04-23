@@ -1,5 +1,14 @@
 import mdptoolbox
 import numpy as np
+import time as _time
+_MSG_STOP_MAX_ITER = "Iterating stopped due to maximum number of iterations " \
+    "condition."
+_MSG_STOP_EPSILON_OPTIMAL_POLICY = "Iterating stopped, epsilon-optimal " \
+    "policy found."
+_MSG_STOP_EPSILON_OPTIMAL_VALUE = "Iterating stopped, epsilon-optimal value " \
+    "function found."
+_MSG_STOP_UNCHANGING_POLICY = "Iterating stopped, unchanging policy found."
+
 
 class ValueIteration(mdptoolbox.mdp.ValueIteration):
     def __init__(self,*args, **kwargs):
@@ -27,38 +36,6 @@ class ValueIteration(mdptoolbox.mdp.ValueIteration):
         self.policy = iterator.policy
 
 
-def iterate_value(transitions, reward, discount=1, epsilon=0.01, max_iter=1000, initial_value=0):
-    arr = []
-    iterator = mdptoolbox.mdp.ValueIteration(transitions, reward, discount, epsilon, max_iter=1, initial_value=initial_value)
-    iterator.run()
-    Vi = iterator.V
-    for i in range(max_iter):
-        iterator = mdptoolbox.mdp.ValueIteration(transitions, reward, discount, epsilon, max_iter=1, initial_value=list(Vi),)
-        iterator.run()
-        V = iterator.V
-        arr.append(np.abs(np.array(V) - np.array(Vi)).max())
-        Vi = V
-    return iterator, arr
-
-
-def iterate_policy(transitions, reward, discount=1, max_iter=1000, policy0=None):
-    arr = []
-    iterator = mdptoolbox.mdp.PolicyIteration(transitions=transitions, reward=reward, discount=discount, max_iter=1, policy0=policy0, eval_type=1)
-    iterator.run()
-    Pi = iterator.policy
-    import pdb; pdb.set_trace()
-    Vi = iterator.V
-    for i in range(max_iter):
-        iterator = mdptoolbox.mdp.PolicyIteration(transitions=transitions, reward=reward, discount=discount, max_iter=1, policy0=list(Pi), eval_type=1)
-        iterator.run()
-        P = iterator.policy
-        V = iterator.V
-        # arr.append(np.abs(np.array(P) - np.array(Pi)).mean())
-        arr.append(np.abs(np.array(V) - np.array(Vi)).mean())
-        Pi = P
-    return iterator, arr
-
-
 def _printVerbosity(iteration, variation):
     if isinstance(variation, float):
         print("{:>10}{:>12f}".format(iteration, variation))
@@ -67,14 +44,6 @@ def _printVerbosity(iteration, variation):
     else:
         print("{:>10}{:>12}".format(iteration, variation))
 
-_MSG_STOP_MAX_ITER = "Iterating stopped due to maximum number of iterations " \
-    "condition."
-_MSG_STOP_EPSILON_OPTIMAL_POLICY = "Iterating stopped, epsilon-optimal " \
-    "policy found."
-_MSG_STOP_EPSILON_OPTIMAL_VALUE = "Iterating stopped, epsilon-optimal value " \
-    "function found."
-_MSG_STOP_UNCHANGING_POLICY = "Iterating stopped, unchanging policy found."
-import time as _time
 
 class PolicyIterationWithers(mdptoolbox.mdp.PolicyIteration):
 
