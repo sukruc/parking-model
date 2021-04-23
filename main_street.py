@@ -1,8 +1,9 @@
-from streetparking import StreetParking
-from agents import QLAgent, SarsaAgent
+from streetv2 import StreetParking
+from rlagent import QLAgent, SarsaAgent
 import mdptoolbox
 import matplotlib.pyplot as plt
 import numpy as np
+import iterators
 
 if __name__ == '__main__':
     street_length = 24
@@ -70,6 +71,18 @@ if __name__ == '__main__':
         )
 
     p = StreetParking(**params)
+    vi = iterators.ValueIteration(p.transition, p.rewards, discount=0.99, max_iter=1, )
+
+
+    vi = mdptoolbox.mdp.ValueIteration(p.transition, p.rewards, discount=1, max_iter=1)
+    vi.run()
+    vi.V[-65:-60]
+    vi = mdptoolbox.mdp.ValueIteration(p.transition, p.rewards, discount=1, max_iter=1, initial_value=list(vi.V))
+    vi.run()
+    vi.V[-65:-60]
+
+    plt.plot(vi._abs_diff_mean)
+    plt.show()
     sars = QLAgent(gamma=gamma, epsilon=0.2, alpha=0.7, epsilon_shrink=0.99, alpha_shrink=0.999)
     # sars = QLAgent(gamma=0.9, epsilon=0.9, alpha=0.7, epsilon_shrink=0.99, alpha_shrink=0.99)
 
@@ -78,8 +91,7 @@ if __name__ == '__main__':
     plt.plot(sars._abs_update_mean)
     plt.show()
 
-    vi = mdptoolbox.mdp.ValueIteration(p.transition, p.rewards, discount=0.99, max_iter=200)
-    vi.run()
+
     pi = mdptoolbox.mdp.PolicyIteration(p.transition, p.rewards, discount=0.99, max_iter=200)
     pi.run()
 

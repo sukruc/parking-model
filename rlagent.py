@@ -3,9 +3,9 @@ import warnings
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import SGDRegressor
-from keras.layers import Dense
-from keras.models import Sequential
-from keras.optimizers import Adam
+# from keras.layers import Dense
+# from keras.models import Sequential
+# from keras.optimizers import Adam
 from collections import deque
 import random
 
@@ -122,7 +122,7 @@ class SarsaAgent:
             action = action_p
         self.epsilon *= self.epsilon_shrink
         self.alpha *= self.alpha_shrink
-        episode_abs_mean = np.abs(old_Qtable - self.Qsa).mean()
+        episode_abs_mean = np.abs(old_Qtable - self.Qsa).max()
         self._abs_update_mean.append(episode_abs_mean)
 
     def set_seed(self):

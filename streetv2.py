@@ -17,6 +17,7 @@ class StreetModel:
     random_accident_proba: float = 0.003
     random_accident_cost: float = 90.0
     allow_goback: bool = True
+    pkatoto_full: float = 0.0
 
 
 class StreetParking(StreetModel):
@@ -36,6 +37,8 @@ class StreetParking(StreetModel):
 
     def reset(self):
         self.done = False
+        # parks, probas = np.array([[k, v['pexist']] for k, v in sorted(self.park_probas.items())]).T.tolist()
+        # self.state = np.random.choice()
         self.state = np.random.randint(0, self._num_park_states + 1)
         self._state_length = 0
         return self.state
@@ -47,9 +50,19 @@ class StreetParking(StreetModel):
             reward = -self.random_accident_cost
             self.state = self._num_states - 1
         elif self._state_length == (self.street_length - 1):
-            self.done = True
-            reward = -self.katoto_cost - self.drive_cost
-            self.state = self._num_states - 3
+            if not self.allow_goback:
+                self.done = True
+                reward = -self.katoto_cost - self.drive_cost
+                self.state = self._num_states - 3
+            else:
+                if np.random.random() < self.pkatoto_full:
+                    self.done = False
+                    reward = -self.drive_cost * self.street_length
+                    self.state = self.reset()
+                else:
+                    self.done = True
+                    reward = -self.katoto_cost - self.drive_cost
+                    self.state = self._num_states - 3
         else:
             self._state_length += 1
             reward = -self.drive_cost
@@ -105,12 +118,17 @@ class StreetParking(StreetModel):
         trans_move[:, -1] = self.random_accident_proba
         trans_move[-3:, -3:] = np.diag([1.] * 3)
 
+        if self.allow_goback:
+            trans_move[-3-block_len:-3, :block_len] = trans_block.copy() * self.pkatoto_full
+            trans_move[-3-block_len:-3, -3] *= (1. - self.pkatoto_full)
+
         trans_park = trans_move.copy()
 
         parkable_row = [0.] * self._num_states
         parkable_row[-2] = 1.0
 
         trans_park[np.arange(1, self._num_states, 2)] = parkable_row
+
 
         return np.array([trans_move, trans_park])
 
@@ -129,6 +147,9 @@ class StreetParking(StreetModel):
         trans_move[-3-block_len:-3, -3] = [-self.drive_cost - self.katoto_cost] * block_len
         trans_move[:, -1] = -self.random_accident_cost
         trans_move[-3:, -3:] = np.zeros((3, 3))
+
+        if self.allow_goback:
+            trans_move[-3-block_len:-3, :block_len] = -self.drive_cost * self.street_length
 
         trans_park = trans_move.copy()
 
