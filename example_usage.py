@@ -57,11 +57,13 @@ if __name__ == '__main__':
 
     pymdptoolbox_installed = True
     try:
-        from iterators import iterate_value, iterate_policy
+        from iterators import iterate_value, iterate_policy, PolicyIterationWithers
         print("Value Iteration")
         vi, arr = iterate_value(env.transition, env.rewards, discount=1.0)
         print("Policy Iteration")
-        pi, arrp = iterate_policy(env.transition, env.rewards, discount=1.0, max_iter=100)
+        pi = PolicyIterationWithers(env.transition, env.rewards, discount=0.99, max_iter=1000)
+        pi.run()
+        arrp = pi._arr
     except (ImportError, NameError) as e:
         raise e
         vi, arr = None, []
@@ -92,10 +94,12 @@ if __name__ == '__main__':
     fig, ax = plt.subplots(3, 1, sharex=True)
     if pymdptoolbox_installed:
         ax[0].imshow(np.array(vi.V[:-3]).reshape(env.street_length, env._num_park_states).T, vmin=-20, vmax=5)
+        ax[2].imshow(np.array(pi.V[:-3]).reshape(env.street_length, env._num_park_states).T, vmin=-20, vmax=5)
     else:
         pass
 
     ax[0].set_title('Value Iteration')
+    ax[2].set_title('Policy Iteration')
     ax[1].imshow(agent.Qsa.max(axis=1)[:-3].reshape(env.street_length, env._num_park_states).T, vmin=-20, vmax=5)
     ax[1].set_title('Q-Learning')
     ax[1].set_xlabel('')
