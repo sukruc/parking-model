@@ -53,7 +53,7 @@ class SarsaAgent:
     estimating Q ≈ q* (Sutton, 2018, p. 130) Sutton, R. S., Barto, A. G.
     (2018). Reinforcement Learning: An Introduction,  2nd Edition
     """
-    def __init__(self, gamma=1.0, alpha=0.25, epsilon=None, seed=None, epsilon_shrink=1.0, alpha_shrink=1.0):
+    def __init__(self, gamma=1.0, alpha=0.25, epsilon=None, seed=None, epsilon_shrink=1.0, alpha_shrink=1.0, max_episode_len=None):
         self.gamma = gamma
         self.alpha = alpha
         self.env_ = None
@@ -65,6 +65,9 @@ class SarsaAgent:
         self.epsilon_shrink = epsilon_shrink
         self.alpha_shrink = alpha_shrink
         self._abs_update_mean = []
+        if max_episode_len is None:
+            max_episode_len = float('inf')
+        self.max_episode_len = max_episode_len
 
     def _greedy_move(self, state):
         """Make a greedy move.
@@ -112,7 +115,8 @@ class SarsaAgent:
         action = self.move(state)
         done = False
         old_Qtable = self.Qsa.copy()
-        while not done:
+        steps = 0
+        while not done and steps <= self.max_episode_len:
             state_p, reward, done, _ = self.env_.step(action)
             action_p = self.move(state_p)
 
@@ -120,6 +124,7 @@ class SarsaAgent:
 
             state = state_p
             action = action_p
+            steps += 1
         self.epsilon *= self.epsilon_shrink
         self.alpha *= self.alpha_shrink
         episode_abs_mean = np.abs(old_Qtable - self.Qsa).max()
@@ -224,11 +229,13 @@ class QLAgent(SarsaAgent):
         done = False
         state = self.env_.reset()
         old_Qtable = self.Qsa.copy()
-        while not done:
+        steps = 0
+        while not done and steps <= self.max_episode_len:
             action = self.move(state)
             state_p, reward, done, _ = self.env_.step(action)
             self.Qsa[state, action] = self._Q_update_func(state, action, reward, state_p, done)
             state = state_p
+            steps += 1
         self.epsilon *= self.epsilon_shrink
         self.alpha *= self.alpha_shrink
         episode_abs_mean = np.abs(old_Qtable - self.Qsa).mean()
