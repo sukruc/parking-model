@@ -34,6 +34,8 @@ class StreetParking(StreetModel):
         self._state_length = None
         self.done = None
         self.reset()
+        self._tr = self.transition
+        self._rew = self.rewards
 
     def reset(self):
         self.done = False
@@ -191,6 +193,28 @@ class StreetParking(StreetModel):
         with open(filename) as f:
             attrs = json.load(f)
         return cls(**attrs)
+
+
+class StreetParkingTr(StreetParking):
+    def step(self, action):
+        if self.done:
+            return self.state, 0., self.done, {'prob':1.}
+        states = np.arange(self.nS)
+        probas = self._tr[action][self.state]
+
+        state_prime = np.random.choice(states, p=probas)
+        if state_prime in states[-3:]:
+            done = True
+        else:
+            done = False
+
+        reward = self._rew[action, self.state, state_prime]
+
+        proba = probas[state_prime]
+        self.state = state_prime
+        self.done = done
+        return self.state, reward, done, {'prob':proba}
+
 
 
 class ParkDict(dict):
