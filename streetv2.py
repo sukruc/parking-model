@@ -42,19 +42,24 @@ class StreetParking(StreetModel):
         # parks, probas = np.array([[k, v['pexist']] for k, v in sorted(self.park_probas.items())]).T.tolist()
         # self.state = np.random.choice()
         # self.state = np.random.randint(0, self._num_park_states + 1)
-        self.state = self._select_random_parking_state()
+        self.state = self._select_random_parking_state(init=True)
         self._state_length = 0
         return self.state
 
-    def _select_random_parking_state(self):
+    def _select_random_parking_state(self, init=False):
+        if init:
+            random_accident_proba = 0.0
+        else:
+            random_accident_proba = self.random_accident_proba
         one_row = []
         for park_type, probas in self.park_probas.items():
             pexist, poccupied = probas['pexist'], probas['poccupied']
             # one_row += list(probas)
             one_row += [
-                (1. - self.random_accident_proba) * pexist * poccupied,
-                (1. - self.random_accident_proba) * pexist * (1. - poccupied),
+                (1. - random_accident_proba) * pexist * poccupied,
+                (1. - random_accident_proba) * pexist * (1. - poccupied),
                 ]
+
         return np.random.choice(np.arange(self._num_park_states), p=one_row)
 
     def _move_step(self):

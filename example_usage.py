@@ -3,7 +3,7 @@ from rlagent import QLAgent
 import matplotlib.pyplot as plt
 import numpy as np
 
-street_length = 20
+street_length = 50
 park_probas = {
      0: {
         'pexist': 0.25,
@@ -43,7 +43,7 @@ park_costs = {
     5: 3.,
     6: 2.,
     }
-walk_cost = 0.8
+walk_cost = 0.1
 drive_cost = 0.1
 katoto_cost = 10.0
 random_accident_proba = 0.0

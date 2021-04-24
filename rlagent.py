@@ -65,6 +65,8 @@ class SarsaAgent:
         self.alpha = alpha
         self.env_ = None
         self.Qsa = None
+        self.transition_freq = None
+        self.exist_freq = None
         if epsilon is None:
             epsilon = 0.0
         self.epsilon = epsilon
@@ -73,6 +75,8 @@ class SarsaAgent:
         self.alpha_shrink = alpha_shrink
         self._abs_update_mean = []
         self._episode_time = []
+        self._policy_diff = []
+        self._rewards = []
         self._creation_time = time.time()
         if max_episode_len is None:
             max_episode_len = float('inf')
@@ -125,8 +129,10 @@ class SarsaAgent:
         done = False
         old_Qtable = self.Qsa.copy()
         steps = 0
+        episode_rewards = 0.
         while not done and steps <= self.max_episode_len:
             state_p, reward, done, _ = self.env_.step(action)
+            episode_rewards += reward
             action_p = self.move(state_p)
 
             self.Qsa[state, action] = self._Q_update_func(state, action, reward, state_p, done, action_p)
@@ -139,6 +145,8 @@ class SarsaAgent:
         episode_abs_mean = np.abs(old_Qtable - self.Qsa).max()
         self._abs_update_mean.append(episode_abs_mean)
         self._episode_time.append(time.time() - self._creation_time)
+        self._policy_diff.append((old_Qtable.argmax(axis=1) != self.Qsa.argmax(axis=1)).sum())
+        self._rewards.append(episode_rewards)
 
     def set_seed(self):
         """Set seed for numpy and environment."""
@@ -196,6 +204,55 @@ class SarsaAgent:
         return [self.policy(state) for state in range(self.env_.nS)]
 
 
+class ExpectedSarsa(SarsaAgent):
+    def _init_Q(self, env):
+        """Initiate Q value table."""
+        if self.Qsa is None:
+            self.Qsa = Qsa = np.zeros((env.nS, env.nA))
+        if self.transition_freq is None:
+            self.transition_freq = np.ones((env.nA, env.nS, env.nS), dtype=int)
+
+    def _fit_episode(self):
+        """Update values for one iteration.
+
+        An iteration is defined by a sequence of steps from starting point to a
+        terminal state.
+        """
+        state = self.env_.reset()
+        action = self.move(state)
+        done = False
+        old_Qtable = self.Qsa.copy()
+        steps = 0
+        episode_rewards = 0.
+        while not done and steps <= self.max_episode_len:
+            state_p, reward, done, _ = self.env_.step(action)
+            self.transition_freq[action, state, state_p] += 1
+            episode_rewards += reward
+            action_p = self.move(state_p)
+
+            self.Qsa[state, action] = self._Q_update_func(state, action, reward, state_p, done, action_p)
+
+            state = state_p
+            action = action_p
+            steps += 1
+        self.epsilon *= self.epsilon_shrink
+        self.alpha *= self.alpha_shrink
+        episode_abs_mean = np.abs(old_Qtable - self.Qsa).max()
+        self._abs_update_mean.append(episode_abs_mean)
+        self._episode_time.append(time.time() - self._creation_time)
+        self._policy_diff.append((old_Qtable.argmax(axis=1) != self.Qsa.argmax(axis=1)).sum())
+        self._rewards.append(episode_rewards)
+
+    def _Q_update_func(self, state, action, reward, state_p, done, action_p=None):
+        """Calculate new Q function value for state-action pair."""
+        Q_p = (self.Qsa.max(axis=1) * self.transition_freq[action, state]).sum() / self.transition_freq[action, state].sum() if not done else 0.0
+        return self.Q(state, action) \
+               + self.alpha * (reward
+                               + self.gamma * Q_p
+                               - self.Q(state, action)
+                               )
+
+
 class QLAgent(SarsaAgent):
     """QLAgent is an off-policy TD control algorithm implementation, also known
     as Q-Learning (Watkins, 1989)
@@ -229,7 +286,7 @@ class QLAgent(SarsaAgent):
     """
     def _Q_update_func(self, state, action, reward, state_p, done, action_p=None):
         """Calculate new Q value for state-action pair."""
-        Q_p = self.Qsa[state_p].max()# if not done else 0.0
+        Q_p = self.Qsa[state_p].max() if not done else 0.0
         return self.Q(state, action) \
             + self.alpha * (reward
                             + self.gamma * Q_p
@@ -246,12 +303,14 @@ class QLAgent(SarsaAgent):
         if env is None:
             env = self.env_
 
+        episode_rewards = 0.
         state = env.reset()
         old_Qtable = self.Qsa.copy()
         steps = 0
         while not done and steps <= self.max_episode_len:
             action = self.move(state)
             state_p, reward, done, _ = env.step(action)
+            episode_rewards += reward
             self.Qsa[state, action] = self._Q_update_func(state, action, reward, state_p, done)
             state = state_p
             steps += 1
@@ -260,6 +319,11 @@ class QLAgent(SarsaAgent):
         episode_abs_mean = np.abs(old_Qtable - self.Qsa).mean()
         self._abs_update_mean.append(episode_abs_mean)
         self._episode_time.append(time.time() - self._creation_time)
+        self._policy_diff.append((old_Qtable.argmax(axis=1) != self.Qsa.argmax(axis=1)).sum())
+        self._rewards.append(episode_rewards)
+
+
+
 
 
 def shape_map(amap):
