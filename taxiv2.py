@@ -98,14 +98,25 @@ class TaxiEnvTr(TaxiEnv):
 
     @property
     def transition(self):
+        initial_state = self.s
         tr = np.zeros((self.nA, self.nS, self.nS))
 
-        for a in range(6):
+        done_states = []
+
+        for a in range(self.nA):
             for s in range(self.nS):
                 self.s = s
                 sp, reward, done, proba = self.step(a)
+                if done:
+                    done_states.append(sp)
                 tr[a, s, sp] = proba['prob']
-        self.reset()
+
+        for s in done_states:
+            for a in range(self.nA):
+                tr[a, s] = np.zeros(self.nS)
+                tr[a, s, s] = 1.0
+
+        self.s = initial_state
         return tr
 
     @property
