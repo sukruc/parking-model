@@ -142,3 +142,9 @@ class ValueIterationWithers(mdptoolbox.mdp.ValueIteration):
         self.policy = tuple(self.policy.tolist())
 
         self.time = _time.time() - self.time
+
+
+def reshape_street_vals(vals: tuple, env):
+    vals = np.array(vals[:-3])
+    vals = vals.reshape(env.street_length, env._num_park_states).T
+    return vals

@@ -185,13 +185,15 @@ class StreetParking(StreetModel):
 
         return np.array([trans_move, trans_park])
 
-    def export_config(self, filename):
+    def get_params(self):
         attrs = {}
         for k in self.__annotations__:
             attrs[k] = getattr(self, k)
+        return attrs
 
+    def export_config(self, filename):
         with open(filename, 'w') as f:
-            json.dump(attrs, f)
+            json.dump(self.get_params(), f)
 
     @classmethod
     def from_config(cls, filename):
