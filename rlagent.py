@@ -158,6 +158,8 @@ class SarsaAgent:
         """Initiate Q value table."""
         if self.Qsa is None:
             self.Qsa = Qsa = np.zeros((env.nS, env.nA))
+        if self.transition_freq is None:
+            self.transition_freq = np.ones((env.nA, env.nS, env.nS), dtype=int)
 
     def _parse_env(self, env):
         """Parse environment parameters and initiate Q table."""
@@ -312,6 +314,7 @@ class QLAgent(SarsaAgent):
             state_p, reward, done, _ = env.step(action)
             episode_rewards += reward
             self.Qsa[state, action] = self._Q_update_func(state, action, reward, state_p, done)
+            self.transition_freq[action, state, state_p] += 1
             state = state_p
             steps += 1
         self.epsilon *= self.epsilon_shrink
