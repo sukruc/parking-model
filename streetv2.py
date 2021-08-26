@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
-from attr import dataclass
+try:
+    from attr import dataclass
+except:
+    from dataclasses import dataclass
 # import mdptoolbox
 import json
 # import matplotlib.pyplot as plt
