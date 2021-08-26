@@ -1,11 +1,5 @@
 import numpy as np
 import warnings
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import SGDRegressor
-# from keras.layers import Dense
-# from keras.models import Sequential
-# from keras.optimizers import Adam
 from collections import deque
 import random
 import time
@@ -584,97 +578,6 @@ class GMCAgent:
 #
 #     def set_weights(self, w):
 #         self.decision.set_weights(w)
-
-
-class DecisionAgent:
-    def __init__(self, lr=0.01, gamma=0.99, init_epsilon=0.9, threshold=0.1,
-                 max_steps=3000, dt_kwds={}):
-        self.alpha = lr
-        self.gamma = gamma
-        self.epsilon = init_epsilon
-        self.thresh = threshold
-        self.w = None
-        self.history = {'rewards': [], 'weights':[]}
-        self.max_steps = max_steps
-        self.decision = DecisionTreeRegressor(**dt_kwds)
-        self.decision.fit(np.random.randn(1, 8), np.random.randn(1,4))
-
-    def Q(self, s, a):
-        return self.decision.predict(s.reshape(-1, 8))[:, a == np.arange(4)]
-
-    def V(self, s):
-        return self.decision.predict(s.reshape(-1, 8))
-
-    def policy(self, s):
-        return self.decision.predict(s.reshape(-1, 8)).argmax()
-
-    def move(self, s):
-        epsilon = max(self.epsilon, self.thresh)
-        if np.random.random() < epsilon:
-    #         if np.random.random() > 0.5:
-    #             return 0
-            return np.random.randint(4)
-        else:
-            return self.policy(s)
-
-    def fit(self, env, episodes=1000, verbose=1, render_train=False):
-        # if self.w is None:
-        #     self._init_weights(env)
-        for episode in range(episodes):
-            if verbose:
-                print('Episode:', episode)
-            self.fit_episode(env, verbose, render_train)
-            self.epsilon = self.epsilon * 0.98
-
-    def update_weights(self, S, A, R):
-        # import pdb; pdb.set_trace()
-        new_target = self.gamma * self.decision.predict(np.array(S)[1:, :])
-        self.decision.fit(np.array(S)[:-1, :],
-                          self.gamma*new_target + (np.array(R[1:]).reshape(-1,1) * (np.array(A[1:]).reshape(-1,1) == (np.arange(4).reshape(1, -1))) )
-                         )
-
-    def fit_episode(self, env, verbose, render_train):
-        S = [env.reset()]
-        a = self.move(S[0])
-        A = [a]
-        R = []
-        done = False
-        i = 0
-        while not done and i < self.max_steps:
-            St, Rt, done, _ = env.step(a)
-            S.append(St)
-            R.append(Rt)
-            a = self.move(St)
-            if render_train:
-                env.render()
-            A.append(a)
-            i += 1
-        R.append(0)
-        # import pdb; pdb.set_trace()
-        self.update_weights(S, A, R)
-        sumr = sum(R)
-        self.history['rewards'].append(sumr)
-        if verbose:
-            print('Total reward:', sumr)
-
-    def get_weights(self):
-        return self.w
-
-    def set_weights(self, w):
-        self.w = w
-
-    def land(self, env):
-        eps, thr = self.epsilon, self.thresh
-        self.epsilon, self.thresh = 0., 0.
-        done = False
-        s = env.reset()
-        i = 0
-        while not done and i < 2000:
-            a = self.move(s)
-            s, _, done, _ = env.step(a)
-            env.render()
-            i += 1
-        self.epsilon, self.thresh= eps, thr
 
 
 class SemiGradientAgent(GMCAgent):

@@ -1,0 +1,3 @@
+numpy==1.18.5
+pandas==0.25.3
+pymdptoolbox
